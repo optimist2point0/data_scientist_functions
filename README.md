@@ -14,6 +14,7 @@ This Python file contains a set of utility functions for data processing, statis
 8. [continuous_vs_categorical_plots](#continuous_vs_categorical_plots)
 9. [categorical_vs_categorical_plots](#categorical_vs_categorical_plots)
 10. [columns_info](#columns_info)
+11. [categorical_vs_continuous_correlation](#categorical_vs_continuous_correlation)
 ### Modeling
 1. [model_dashboard_binary_classification](#model_dashboard_binary_classification)
  
@@ -47,7 +48,10 @@ This Python file contains a set of utility functions for data processing, statis
 - Visualizes the relationship between two categorical variables using a stacked bar plot.
 
 #### columns_info
-- This function columns_info categorizes the columns of a pandas DataFrame based on their data types and the presence of missing values
+- Categorizes the columns of a pandas DataFrame based on their data types and the presence of missing values
+
+#### categorical_vs_continuous_correlation
+- Calculates the correlation (the square root of the R² score) between a categorical variable and a continuous variable using an OLS (Ordinary Least Squares) model
 ---
 ### Modeling 
 #### model_dashboard_binary_classification

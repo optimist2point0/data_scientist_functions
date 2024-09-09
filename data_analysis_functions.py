@@ -10,6 +10,9 @@ from IPython.core.display_functions import display
 
 from scipy.stats import chi2_contingency, shapiro, norm, normaltest, anderson
 
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import OneHotEncoder
+
 
 # Seeder
 # :seed to make all processes deterministic     # type: int
@@ -220,7 +223,7 @@ def tests_for_normality(array, sign_val=0.05, plot=False, verbose=True, desc_sta
             print("Check input type.")
 
     # check for null values
-    assert array.notnull().all() is True, "WARNING! The Null values are present!"
+    assert array.notnull().any() is True, "WARNING! The Null values are present!"
 
     # NormalTest
     _, p_val = normaltest(array)
@@ -504,3 +507,33 @@ def columns_info(df, cat_num_threshold=25):
                 pass
 
     return columns_info_dict
+
+
+# Calculate correlation between categorical and continuous values
+def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
+    """
+    Calculate sqrt of R^2 score (correlation) of an OLS model with X as OneHotEncoded categorical values and y as the
+    continuous values.
+
+    Args:
+        categorical_arr (array-like with shape (n, 1)): categorical values
+        continuous_arr (array-like with shape (n, 1)): continuous values
+
+    Returns:
+        correlation_value (float): sqrt of R^2 score (correlation) of OLS model
+    """
+    assert np.any(pd.isnull(categorical_arr)) is True, "WARNING! The Null values are present in categorical_arr!"
+    assert np.any(pd.isnull(continuous_arr)) is True, "WARNING! The Null values are present in continuous_arr!"
+
+    if isinstance(categorical_arr, pd.Series):
+        categorical_arr = categorical_arr.to_frame()
+    elif isinstance(categorical_arr, np.ndarray):
+        categorical_arr = categorical_arr.reshape(-1, 1)
+
+    x = OneHotEncoder().fit_transform(categorical_arr)
+
+    model = LinearRegression()
+    model.fit(x, continuous_arr)
+
+    correlation_value = np.sqrt(model.score(x, continuous_arr))
+    return correlation_value
