@@ -448,3 +448,59 @@ def categorical_vs_categorical_plots(categorical_arr_1, categorical_arr_2, desc_
             frequent_b=('cat_1', lambda x: x.value_counts().min())
         )
         display(result)
+
+
+# Return columns sorted in list by its type
+def columns_info(df, cat_num_threshold=25):
+    """
+    Return dictionary of the columns' dtypes as keys and lists of the columns' names as values.
+
+    Args:
+         df (pd.DataFrame): DataFrame you worked with
+         cat_num_threshold (int): threshold value to determine if the column with int type is numeric for sure or should
+                                  be discovered more.
+
+    Returns:
+        columns_info_dict (dict): result dictionary with the following keys:
+                                    - cat_cols: Columns of categorical type;
+                                    - num_cols: Columns of numeric type;
+                                    - mix_cols: Columns that don't fit into categorical or numeric;
+                                    - miss_cat_cols, miss_num_cols, miss_mix_cols: Columns from each category that
+                                                                                   contain missing values.
+    """
+    columns_info_dict = {
+        "cat_cols": [],
+        "num_cols": [],
+        "mix_cols": [],
+        "miss_cat_cols": [],
+        "miss_num_cols": [],
+        "miss_mix_cols": []
+    }
+
+    for col in df.columns:
+
+        if df[col].dtype == 'O':
+            columns_info_dict['cat_cols'].append(col)
+
+            if df[col].isnull().any():
+                columns_info_dict['miss_cat_cols'].append(col)
+            else:
+                pass
+
+        elif (df[col].dtype == 'float') or ((df[col].dtype == 'int') and (df[col].nunique() >= cat_num_threshold)):
+            columns_info_dict['num_cols'].append(col)
+
+            if df[col].isnull().any():
+                columns_info_dict['miss_num_cols'].append(col)
+            else:
+                pass
+
+        else:
+            columns_info_dict['mix_cols'].append(col)
+
+            if df[col].isnull().any():
+                columns_info_dict['miss_mix_cols'].append(col)
+            else:
+                pass
+
+    return columns_info_dict

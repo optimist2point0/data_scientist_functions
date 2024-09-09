@@ -13,6 +13,7 @@ This Python file contains a set of utility functions for data processing, statis
 7. [tests_for_normality](#tests_for_normality)
 8. [continuous_vs_categorical_plots](#continuous_vs_categorical_plots)
 9. [categorical_vs_categorical_plots](#categorical_vs_categorical_plots)
+10. [columns_info](#columns_info)
 ### Modeling
 1. [model_dashboard_binary_classification](#model_dashboard_binary_classification)
  
@@ -45,6 +46,8 @@ This Python file contains a set of utility functions for data processing, statis
 #### categorical_vs_categorical_plots
 - Visualizes the relationship between two categorical variables using a stacked bar plot.
 
+#### columns_info
+- This function columns_info categorizes the columns of a pandas DataFrame based on their data types and the presence of missing values
 ---
 ### Modeling 
 #### model_dashboard_binary_classification
