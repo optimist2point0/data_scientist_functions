@@ -223,7 +223,7 @@ def tests_for_normality(array, sign_val=0.05, plot=False, verbose=True, desc_sta
             print("Check input type.")
 
     # check for null values
-    assert array.notnull().any() is True, "WARNING! The Null values are present!"
+    assert array.notnull().all() is True, "WARNING! The Null values are present!"
 
     # NormalTest
     _, p_val = normaltest(array)
@@ -522,8 +522,8 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
     Returns:
         correlation_value (float): sqrt of R^2 score (correlation) of OLS model
     """
-    assert np.any(pd.isnull(categorical_arr)) is True, "WARNING! The Null values are present in categorical_arr!"
-    assert np.any(pd.isnull(continuous_arr)) is True, "WARNING! The Null values are present in continuous_arr!"
+    assert np.any(pd.isnull(categorical_arr)) is False, "WARNING! The Null values are present in categorical_arr!"
+    assert np.any(pd.isnull(continuous_arr)) is False, "WARNING! The Null values are present in continuous_arr!"
 
     if isinstance(categorical_arr, pd.Series):
         categorical_arr = categorical_arr.to_frame()
