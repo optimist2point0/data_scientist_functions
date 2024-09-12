@@ -243,7 +243,7 @@ def tests_for_normality(array, sign_val=0.05, plot=True, verbose=False, desc_sta
     results["Kolmogorov_Smirnov"] = ((True if p_val > sign_val else False), round(st, 5), round(p_val, 5))
 
     if plot:
-        f, axs = plt.subplots(1, 3, figsize=(9, 4))
+        f, axs = plt.subplots(1, 3, figsize=(15, 4))
         sns.distplot(array, kde=True, fit=norm, ax=axs[0])
         axs[0].set_title("Distribution")
 
