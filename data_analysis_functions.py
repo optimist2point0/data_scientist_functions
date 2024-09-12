@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from IPython.core.display_functions import display
 
-from scipy.stats import chi2_contingency, shapiro, norm, normaltest, anderson
+from scipy.stats import chi2_contingency, shapiro, norm, normaltest, anderson, kstest, probplot
 
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import OneHotEncoder
@@ -201,7 +201,7 @@ def info_miss_nunique(df, displ=True, verbose=True):
 
 # Calculate normality tests and provide plot or varbose
 # noinspection PyTypedDict
-def tests_for_normality(array, sign_val=0.05, plot=False, verbose=True, desc_stats=True):
+def tests_for_normality(array, sign_val=0.05, plot=True, verbose=False, desc_stats=True):
     """
     This function provide 3 tests for normality Shapiro-Wilk, NormaTest, Anderson-Darling and provide plot.
 
@@ -226,24 +226,32 @@ def tests_for_normality(array, sign_val=0.05, plot=False, verbose=True, desc_sta
     assert bool(array.notnull().all()) is True, "WARNING! The Null values are present!"
 
     # NormalTest
-    _, p_val = normaltest(array)
-    results = {"NormalTest": ((True if p_val > sign_val else False), round(p_val, 5))}
+    st, p_val = normaltest(array)
+    results = {"NormalTest": ((True if p_val > sign_val else False), round(st, 5), round(p_val, 5))}
 
     # Shapiro-Wilk
-    _, p_val = shapiro(array)
-    results["Shapiro_Wilk"] = ((True if p_val > sign_val else False), round(p_val, 5))
+    st, p_val = shapiro(array)
+    results["Shapiro_Wilk"] = ((True if p_val > sign_val else False), round(st, 5), round(p_val, 5))
 
     # Anderson-Darling
     st, cr, _ = anderson(array.values)
     results["Anderson_Darling"] = ((True if st < cr[3] else False), None)
 
+    # Kolmogorov-Smirnov test
+    params = norm.fit(array.values)
+    st, p_val = kstest(array.values, 'norm', args=params)
+    results["Kolmogorov_Smirnov"] = ((True if p_val > sign_val else False), round(st, 5), round(p_val, 5))
+
     if plot:
-        f, axs = plt.subplots(1, 2, figsize=(9, 4))
+        f, axs = plt.subplots(1, 3, figsize=(9, 4))
         sns.distplot(array, kde=True, fit=norm, ax=axs[0])
         axs[0].set_title("Distribution")
 
         sns.boxplot(array, orient='h', ax=axs[1])
         axs[1].set_title("Box-plot")
+
+        probplot(array.values, plot=axs[2])
+        axs[2].set_title("Q-Q Plot")
         plt.show()
 
     if desc_stats:
