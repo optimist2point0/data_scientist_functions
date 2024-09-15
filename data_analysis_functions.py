@@ -203,7 +203,8 @@ def info_miss_nunique(df, displ=True, verbose=True):
 # noinspection PyTypedDict
 def tests_for_normality(array, sign_val=0.05, plot=True, verbose=False, desc_stats=True):
     """
-    This function provide 3 tests for normality Shapiro-Wilk, NormaTest, Anderson-Darling and provide plot.
+    This function provide 3 tests for normality Shapiro-Wilk, NormaTest, Anderson-Darling, Kolmogorov-Smirnov
+    and provide plots.
 
     Args:
         array (array-like with shape (n, )): array-like values for testing without NaN
@@ -547,3 +548,69 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
 
     correlation_value = np.sqrt(model.score(x, continuous_arr))
     return correlation_value
+
+
+# Calculate overall correlation between features
+def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col=None):
+    """
+    Calculate the Cramér's V correlation for all pairs of categorical columns, Pearson or Spearman correlation for all
+    pairs of numeric columns and Sqrt of R^2 score for all pairs of numeric and categorical columns in a DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame of features
+        cat_cols (list): list of categorical columns names
+        num_cols (list): list of numeric columns names
+        lin_corr_method (string)='pearson': method of linear correlation calculation 'pearson' or 'spearman'
+        target_col (string): name for target column (optional)
+    Returns:
+        corr_df (pd.DataFrame): DataFrame of all correlation values (like df.corr())
+    """
+    # Initialize an empty DataFrame to store Cramér's V values
+    all_cols = list(num_cols) + list(cat_cols)
+
+    if target_col:
+        i = all_cols.index(target_col)
+        all_cols.pop(i)
+        all_cols.append(target_col)
+
+    n = len(all_cols)
+    corr_df = pd.DataFrame(np.zeros((n, n)), index=all_cols, columns=all_cols)
+
+    count = 0
+
+    # Iterate over all pairs of columns
+    for i in range(n):
+        for j in range(i, n):
+
+            if (all_cols[i] in num_cols) and (all_cols[j] in num_cols):
+                corr_val = df[[all_cols[i], all_cols[j]]].corr(method=lin_corr_method).iloc[0, 1]
+
+            elif (all_cols[i] in num_cols) and (all_cols[j] in cat_cols):
+                corr_val = categorical_vs_continuous_correlation(df[all_cols[j]], df[all_cols[i]])
+
+            elif (all_cols[i] in cat_cols) and (all_cols[j] in num_cols):
+                corr_val = categorical_vs_continuous_correlation(df[all_cols[i]], df[all_cols[j]])
+
+            else:
+                # Create a contingency table for the pair of columns
+                table, lam, text = confusion_table(df[all_cols[i]], df[all_cols[j]])
+
+                if text and count < 4:
+                    count += 1
+                    print(text)
+
+                # Calculate Cramér's V for this pair
+                corr_val = cramers_v(table, lam)
+
+            corr_df.iat[i, j] = corr_val
+            corr_df.iat[j, i] = corr_val
+
+    # G-test don't put 1 on diagonal
+    for i in range(corr_df.shape[0]):
+        corr_df.iloc[i, i] = 1
+
+    if count > 0:
+        print("...")
+        print(f"G-test was used {count} times.")
+        
+    return corr_df
