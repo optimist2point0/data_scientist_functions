@@ -75,53 +75,151 @@ def reduce_mem_usage(df, verbose=True):
 # Cross-table for Cramers' V correlation
 def confusion_table(feature_1, feature_2):
     """
-    Calculate cross-table (confusion table) for Chi2-test.
+    Calculate cross-table (confusion table) for Chi2-test (G-test, Monte Carlo simulation).
 
     Args:
         feature_1: array-like of shape (n, ) with values to calculate cross-table
         feature_2: array-like of shape (n, ) with values to calculate cross-table
     Returns:
-        table (pd.DataFrame): cross-table
-        lam (int): lambda_ parameter determines Chi2-test (1) or G-test (0)
-        text (None or str): None or text of WARNING
+        cross_table (pd.DataFrame): cross-table
+        lam (int or None): lambda_ parameter determines Chi2-test (1) or G-test (0) or Monte Carlo simulation (-1) or
+                           return 1.0 for Cramers' vV correlation (None)
+        text (str or None): None or text of WARNING
+        yate_correction (bool or None): parameter if to use Yates’ correction for continuity
     """
 
-    table = pd.crosstab(feature_1, feature_2)
-    lam = 1
-    text = None
+    # If this is the same arrays
+    if np.all(feature_1 == feature_2):
+        return pd.crosstab(feature_1, feature_2), None, None, None
 
-    if (table < 5).any().any():
-        text = "WARNING! There are cells with frequencies < 5. G-test will be used instead of Chi2."
-        lam = 0
     else:
-        pass
-    return table, lam, text
+        # calculate cross-table (contingency table)
+        cross_table = pd.crosstab(feature_1, feature_2)
+        # Chi2 test by default
+        lam = 1
+        # if any warning
+        text = None
+        # use of Yates’ correction for continuity
+        yate_correction = False
+        # degree of freedom
+        dff = (cross_table.shape[0] - 1) * (cross_table.shape[1] - 1)
+        # calculate expected values
+        expected_vals = (
+                                cross_table.values.sum(axis=0).reshape(-1, 1)
+                                * cross_table.values.sum(axis=1).reshape(1, -1)
+                        ) / cross_table.sum().sum()
+
+        # check the rule if to use the Yates’ correction for continuity or not
+        if (cross_table < 10).any().any() and dff == 1:
+            yate_correction = True
+        else:
+            pass
+
+        if ((cross_table < 5).sum().sum() / cross_table.size > 0.2) or (cross_table < 1).any().any():
+            text = ("WARNING! There are > 20% of cells with frequencies < 5 or at least one cell with 0. "
+                    "Monte Carlo simulation will be used  instead of Chi2 (G-test). "
+                    "It returns p-value for independency test.")
+            return cross_table, -1, text, None
+
+        elif np.any(expected_vals) < 3:
+            text = "WARNING! There are small E-xpected values. G-test will be used instead of Chi2."
+            lam = 0
+            return cross_table, lam, text, yate_correction
+
+        else:
+            return cross_table, lam, text, yate_correction
+
+
+# Monte Carlo simulation for Chi2 test and p-value
+def monte_carlo_chi2_test(cross_table, num_simulations=10000):
+    """
+    Calculate p-value for independency test of Chi2 using Monte Carlo simulation.
+
+    Args:
+        cross_table (pd.DataFrame): cross-table
+        num_simulations (int): number of simulation
+    Returns:
+        p_value (float): p-value of the test
+    """
+    # Calculate expected values and probabilities
+    expected_vals = (
+                            cross_table.values.sum(axis=1).reshape(-1, 1)*cross_table.values.sum(axis=0).reshape(1, -1)
+                    )/cross_table.sum().sum()
+    expected_vals = expected_vals.reshape(-1, )
+
+    # check for 0 in expected values
+    eps = 1e-5
+    m = expected_vals == 0
+    if np.any(m):
+        eps = eps / m.sum()
+        expected_vals[m] += eps
+        expected_vals[~m] -= eps
+
+    probabilities = expected_vals/cross_table.sum().sum()
+    # Size of the cross-table
+    no_cells = cross_table.values.size
+    # Total instances
+    total_counts = cross_table.sum().sum()
+
+    # Make simulations
+    simulations = np.random.choice(np.arange(no_cells),
+                                   size=(num_simulations, total_counts),
+                                   p=probabilities)
+
+    # Calculate Chi2 statistics
+    def calculate_chi_squared(sim, expected, k):
+        sim_table = np.bincount(sim, minlength=k)
+        chi_squared = np.sum((sim_table - expected) ** 2 / expected)
+        return chi_squared
+
+    # Apply the chi-squared function over the simulations
+    chi = [calculate_chi_squared(sim, expected_vals, no_cells) for sim in simulations]
+
+    # Calculating the test statistic from the actual sales data
+    statistic = np.sum((cross_table.values.reshape(-1,) - expected_vals) ** 2 / expected_vals)
+
+    # Calculating the p-value
+    p_value = (1 + np.sum(np.array(chi) >= statistic)) / (num_simulations + 1)
+
+    return p_value
 
 
 # Cramers' V correlation for cat. col.
-def cramers_v(cross_table, lam):
+def cramers_v(cross_table, lam, text, yate_correction, num_simulations=10000):
     """
     Calculate Cramér's V statistic for categorical-categorical association.
 
     Args:
         cross_table (pd.DataFrame): cross-table of 2 variables
-        lam (int): lambda_ parameter determines Chi2-test (1) or G-test (0)
+        lam (int or None): lambda_ parameter determines Chi2-test (1) or G-test (0) or Monte Carlo simulation (-1)
+        text (str or None): None or text of WARNING
+        yate_correction (bool): correction parameter determines if apply Yates’ correction for continuity
+        num_simulations (int): number of simulation for Monte Carlo simulation
     Returns:
         v (float): Cramers' V correlation
     """
-    # Chi2_contingency returns the chi2 value, p-value, degrees of freedom, and expected frequencies
-    chi2, _, _, _ = chi2_contingency(cross_table, lambda_=lam)
+    if lam is None:
+        return 1.0
 
-    # Get the total number of observations
-    n = cross_table.sum().sum()
+    elif lam == -1:
+        print(text)
+        p_value = monte_carlo_chi2_test(cross_table, num_simulations=num_simulations)
+        return p_value
 
-    # Get the number of rows and columns in the confusion matrix
-    k, r = cross_table.shape
+    else:
+        # Chi2_contingency returns the chi2 value, p-value, degrees of freedom, and expected frequencies
+        chi2, _, _, _ = chi2_contingency(cross_table, lambda_=lam, correction=yate_correction)
 
-    # Calculate Cramér's V
-    v = np.sqrt(chi2 / (n * (min(k - 1, r - 1))))
+        # Get the total number of observations
+        n = cross_table.sum().sum()
 
-    return v
+        # Get the number of rows and columns in the confusion matrix
+        k, r = cross_table.shape
+
+        # Calculate Cramér's V
+        v = np.sqrt(chi2 / (n * (min(k - 1, r - 1))))
+
+        return v
 
 
 # Analogy to pd.DataFrame.corr() function for cat. col.
@@ -140,27 +238,32 @@ def cramers_v_matrix(df, cat_cols):
     cramers_v_df = pd.DataFrame(np.zeros((n, n)), index=cat_cols, columns=cat_cols)
 
     count = 0
+    monte_carlo_list = []
 
     # Iterate over all pairs of columns
     for i in range(n):
         for j in range(i, n):
 
             # Create a contingency table for the pair of columns
-            table, lam, text = confusion_table(df[cat_cols[i]], df[cat_cols[j]])
+            cross_table, lam, text, yate_correction = confusion_table(df[cat_cols[i]], df[cat_cols[j]])
 
-            if text and count < 4:
+            if lam == 0 and count < 4:
                 count += 1
                 print(text)
 
             # Calculate Cramér's V for this pair
-            cramers_v_value = cramers_v(table, lam)
+            cramers_v_value = cramers_v(cross_table, lam, text, yate_correction)
 
             cramers_v_df.iat[i, j] = cramers_v_value
             cramers_v_df.iat[j, i] = cramers_v_value
 
-    # G-test don't put 1 on diagonal
-    for i in range(cramers_v_df.shape[0]):
-        cramers_v_df.iloc[i, i] = 1
+            if lam == -1:
+                monte_carlo_list.append((cat_cols[i], cat_cols[j], cramers_v_value))
+
+    if len(monte_carlo_list) > 0:
+        for gr in monte_carlo_list:
+            print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
+        print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
 
     return cramers_v_df
 
@@ -577,6 +680,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
     corr_df = pd.DataFrame(np.zeros((n, n)), index=all_cols, columns=all_cols)
 
     count = 0
+    monte_carlo_list = []
 
     # Iterate over all pairs of columns
     for i in range(n):
@@ -593,24 +697,29 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
 
             else:
                 # Create a contingency table for the pair of columns
-                table, lam, text = confusion_table(df[all_cols[i]], df[all_cols[j]])
+                cross_table, lam, text, yate_correction = confusion_table(df[cat_cols[i]], df[cat_cols[j]])
 
-                if text and count < 4:
+                if lam == 0 and count < 4:
                     count += 1
                     print(text)
 
                 # Calculate Cramér's V for this pair
-                corr_val = cramers_v(table, lam)
+                corr_val = cramers_v(cross_table, lam, text, yate_correction)
+
+                if lam == -1:
+                    monte_carlo_list.append((cat_cols[i], cat_cols[j], corr_val))
 
             corr_df.iat[i, j] = corr_val
             corr_df.iat[j, i] = corr_val
 
-    # G-test don't put 1 on diagonal
-    for i in range(corr_df.shape[0]):
-        corr_df.iloc[i, i] = 1
-
-    if count > 0:
+    if count >= 4:
         print("...")
         print(f"G-test was used {count} times.")
+
+    if len(monte_carlo_list) > 0:
+        for gr in monte_carlo_list:
+            print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
+        print(
+            "Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
         
     return corr_df

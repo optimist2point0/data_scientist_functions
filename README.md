@@ -9,13 +9,14 @@ This Python file contains a set of utility functions for data processing, statis
 3. [info_miss_nunique](#info_miss_nunique)
 4. [columns_info](#columns_info)
 5. [confusion_table](#confusion_table)
-6. [cramers_v](#cramers_v)
-7. [cramers_v_matrix](#cramers_v_matrix)
-8. [categorical_vs_continuous_correlation](#categorical_vs_continuous_correlation)
-9. [correlation_df](#correlation_df)
-10. [tests_for_normality](#tests_for_normality)
-11. [continuous_vs_categorical_plots](#continuous_vs_categorical_plots)
-12. [categorical_vs_categorical_plots](#categorical_vs_categorical_plots)
+6. [monte_carlo_chi2_test](#monte_carlo_chi2_test)
+7. [cramers_v](#cramers_v)
+8. [cramers_v_matrix](#cramers_v_matrix)
+9. [categorical_vs_continuous_correlation](#categorical_vs_continuous_correlation)
+10. [correlation_df](#correlation_df)
+11. [tests_for_normality](#tests_for_normality)
+12. [continuous_vs_categorical_plots](#continuous_vs_categorical_plots)
+13. [categorical_vs_categorical_plots](#categorical_vs_categorical_plots)
 ### Modeling
 1. [model_dashboard_binary_classification](#model_dashboard_binary_classification)
  
@@ -35,6 +36,9 @@ This Python file contains a set of utility functions for data processing, statis
 
 #### confusion_table
 - Generates a confusion matrix (cross-table) for two categorical features.
+
+#### monte_carlo_chi2_test
+- Calculate p-value for Chi2 test using Monte Carlo simulation.
 
 #### cramers_v
 - Computes Cramér's V statistic for the strength of association between two categorical variables.
