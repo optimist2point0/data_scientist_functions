@@ -697,7 +697,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
 
             else:
                 # Create a contingency table for the pair of columns
-                cross_table, lam, text, yate_correction = confusion_table(df[cat_cols[i]], df[cat_cols[j]])
+                cross_table, lam, text, yate_correction = confusion_table(df[all_cols[i]], df[all_cols[j]])
 
                 if lam == 0 and count < 4:
                     count += 1
@@ -707,7 +707,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
                 corr_val = cramers_v(cross_table, lam, text, yate_correction)
 
                 if lam == -1:
-                    monte_carlo_list.append((cat_cols[i], cat_cols[j], corr_val))
+                    monte_carlo_list.append((all_cols[i], all_cols[j], corr_val))
 
             corr_df.iat[i, j] = corr_val
             corr_df.iat[j, i] = corr_val
