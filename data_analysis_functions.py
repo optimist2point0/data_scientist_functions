@@ -1,5 +1,6 @@
 import os
 import random
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -678,6 +679,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         num_simulation (int): number of simulations for Monte Carlo
     Returns:
         corr_df (pd.DataFrame): DataFrame of all correlation values (like df.corr())
+        monte_carlo_grouped_dict (dict or None): if the Monte Carlo simulations occurs > 5 times, else None
     """
     # Initialize an empty DataFrame to store Cramér's V values
     all_cols = list(num_cols) + list(cat_cols)
@@ -736,9 +738,21 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         print("...")
         print(f"G-test was used {count_g_test} times.")
 
-    if len(monte_carlo_list) > 0:
+    if 0 < len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
         print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
-        
-    return corr_df
+
+        return corr_df, None
+    else:
+        # create dictionary for convenience
+        monte_carlo_grouped_dict = defaultdict(list)
+
+        # Iterate through the list and group by Col1Name
+        for col1, col2, p_val in monte_carlo_list:
+            monte_carlo_grouped_dict[col1].append((col2, p_val))
+
+        # Convert defaultdict to a normal dictionary (optional)
+        monte_carlo_grouped_dict = dict(monte_carlo_grouped_dict)
+
+        return corr_df, monte_carlo_grouped_dict
