@@ -664,7 +664,7 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
 
 
 # Calculate overall correlation between features
-def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col=None):
+def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col=None, num_simulation=2000):
     """
     Calculate the Cramér's V correlation for all pairs of categorical columns, Pearson or Spearman correlation for all
     pairs of numeric columns and Sqrt of R^2 score for all pairs of numeric and categorical columns in a DataFrame.
@@ -675,6 +675,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         num_cols (list): list of numeric columns names
         lin_corr_method (string)='pearson': method of linear correlation calculation 'pearson' or 'spearman'
         target_col (string): name for target column (optional)
+        num_simulation (int): number of simulations for Monte Carlo
     Returns:
         corr_df (pd.DataFrame): DataFrame of all correlation values (like df.corr())
     """
@@ -723,7 +724,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
                         pass
 
                 # Calculate Cramér's V for this pair
-                corr_val = cramers_v(cross_table, lam, text, yate_correction)
+                corr_val = cramers_v(cross_table, lam, text, yate_correction, num_simulations=num_simulation)
 
                 if lam == -1:
                     monte_carlo_list.append((all_cols[i], all_cols[j], corr_val))
@@ -738,7 +739,6 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
     if len(monte_carlo_list) > 0:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
-        print(
-            "Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
+        print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
         
     return corr_df
