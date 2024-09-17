@@ -202,7 +202,8 @@ def cramers_v(cross_table, lam, text, yate_correction, num_simulations=10000):
         return 1.0
 
     elif lam == -1:
-        print(text)
+        if text is not None:
+            print(text)
         p_value = monte_carlo_chi2_test(cross_table, num_simulations=num_simulations)
         return p_value
 
@@ -237,7 +238,8 @@ def cramers_v_matrix(df, cat_cols):
     n = len(cat_cols)
     cramers_v_df = pd.DataFrame(np.zeros((n, n)), index=cat_cols, columns=cat_cols)
 
-    count = 0
+    count_g_test = 0
+    count_monte_carlo = 0
     monte_carlo_list = []
 
     # Iterate over all pairs of columns
@@ -247,9 +249,17 @@ def cramers_v_matrix(df, cat_cols):
             # Create a contingency table for the pair of columns
             cross_table, lam, text, yate_correction = confusion_table(df[cat_cols[i]], df[cat_cols[j]])
 
-            if lam == 0 and count < 4:
-                count += 1
-                print(text)
+            if lam == 0:
+                count_g_test += 1
+                if count_g_test < 4:
+                    print(text)
+
+            if lam == -1:
+                count_monte_carlo += 1
+                if count_monte_carlo > 3:
+                    text = None
+                else:
+                    pass
 
             # Calculate Cramér's V for this pair
             cramers_v_value = cramers_v(cross_table, lam, text, yate_correction)
@@ -679,7 +689,8 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
     n = len(all_cols)
     corr_df = pd.DataFrame(np.zeros((n, n)), index=all_cols, columns=all_cols)
 
-    count = 0
+    count_g_test = 0
+    count_monte_carlo = 0
     monte_carlo_list = []
 
     # Iterate over all pairs of columns
@@ -699,9 +710,17 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
                 # Create a contingency table for the pair of columns
                 cross_table, lam, text, yate_correction = confusion_table(df[all_cols[i]], df[all_cols[j]])
 
-                if lam == 0 and count < 4:
-                    count += 1
-                    print(text)
+                if lam == 0:
+                    count_g_test += 1
+                    if count_g_test < 4:
+                        print(text)
+
+                if lam == -1:
+                    count_monte_carlo += 1
+                    if count_monte_carlo > 3:
+                        text = None
+                    else:
+                        pass
 
                 # Calculate Cramér's V for this pair
                 corr_val = cramers_v(cross_table, lam, text, yate_correction)
@@ -712,9 +731,9 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
             corr_df.iat[i, j] = corr_val
             corr_df.iat[j, i] = corr_val
 
-    if count >= 4:
+    if count_g_test >= 4:
         print("...")
-        print(f"G-test was used {count} times.")
+        print(f"G-test was used {count_g_test} times.")
 
     if len(monte_carlo_list) > 0:
         for gr in monte_carlo_list:
