@@ -836,7 +836,7 @@ def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression',
         print("...")
         print(f"G-test was used {count_g_test} times.")
 
-    if len(monte_carlo_list) < 6:
+    if 0 < len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
         print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
