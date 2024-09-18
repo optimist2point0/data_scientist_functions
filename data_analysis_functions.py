@@ -676,8 +676,8 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
 
     Args:
         df (pd.DataFrame): DataFrame of features
-        cat_cols (list): list of categorical columns names
-        num_cols (list): list of numeric columns names
+        cat_cols (list): list of categorical columns names, can be empty list
+        num_cols (list): list of numeric columns names, can be empty list
         lin_corr_method (string)='pearson': method of linear correlation calculation 'pearson' or 'spearman'
         target_col (string): name for target column (optional)
         num_simulation (int): number of simulations for Monte Carlo
@@ -765,8 +765,8 @@ def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression',
     Args:
         df (pd.DataFrame): DataFrame of features
         target_col (string): name for target column
-        cat_cols (list): list of categorical columns names
-        num_cols (list): list of numeric columns names
+        cat_cols (list): list of categorical columns names, can be empty list
+        num_cols (list): list of numeric columns names, can be empty list
         task (str): how to treat target_col, if 'regression' then numeric; if 'classification' then categorical default
                     'regression'
         lin_corr_method (string)='pearson': method of linear correlation calculation 'pearson' or 'spearman'
@@ -826,7 +826,7 @@ def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression',
             if lam == -1:
                 monte_carlo_list.append((target_col, all_cols[i], corr_val))
 
-        corr_df.iat[i] = corr_val
+        corr_df.iat[i, 0] = corr_val
 
     if count_g_test >= 4:
         print("...")
