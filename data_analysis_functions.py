@@ -749,9 +749,13 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         return corr_df, None
     else:
         # create dictionary for convenience
-        monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['Col1', 'Col2', 'p_value'])
+        if monte_carlo_list:
+            monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['Col1', 'Col2', 'p_value'])
 
-        return corr_df, monte_carlo_df
+            return corr_df, monte_carlo_df
+
+        else:
+            return corr_df, None
 
 
 # Calculate correlation between features and target
@@ -832,14 +836,19 @@ def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression',
         print("...")
         print(f"G-test was used {count_g_test} times.")
 
-    if 0 < len(monte_carlo_list) < 6:
+    if len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
         print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
 
         return corr_df, None
+
     else:
         # create dictionary for convenience
-        monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['target_col', 'feature', 'p_value'])
+        if monte_carlo_list:
+            monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['target_col', 'feature', 'p_value'])
 
-        return corr_df, monte_carlo_df
+            return corr_df, monte_carlo_df
+
+        else:
+            return corr_df, None
