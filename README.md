@@ -14,9 +14,10 @@ This Python file contains a set of utility functions for data processing, statis
 8. [cramers_v_matrix](#cramers_v_matrix)
 9. [categorical_vs_continuous_correlation](#categorical_vs_continuous_correlation)
 10. [correlation_df](#correlation_df)
-11. [tests_for_normality](#tests_for_normality)
-12. [continuous_vs_categorical_plots](#continuous_vs_categorical_plots)
-13. [categorical_vs_categorical_plots](#categorical_vs_categorical_plots)
+11. [correlation_target_df](#correlation_target_df)
+12. [tests_for_normality](#tests_for_normality)
+13. [continuous_vs_categorical_plots](#continuous_vs_categorical_plots)
+14. [categorical_vs_categorical_plots](#categorical_vs_categorical_plots)
 ### Modeling
 1. [model_dashboard_binary_classification](#model_dashboard_binary_classification)
  
@@ -32,7 +33,7 @@ This Python file contains a set of utility functions for data processing, statis
 - Analyzes missing values, data types, and the number of unique values in a DataFrame.
 
 #### columns_info
-- Categorizes the columns of a pandas DataFrame based on their data types and the presence of missing values
+- Categorizes the columns of a pandas DataFrame based on their data types and the presence of missing values.
 
 #### confusion_table
 - Generates a confusion matrix (cross-table) for two categorical features.
@@ -47,10 +48,13 @@ This Python file contains a set of utility functions for data processing, statis
 - Creates a matrix of Cramér's V correlations for all pairs of categorical columns in a DataFrame.
 
 #### categorical_vs_continuous_correlation
-- Calculates the correlation (the square root of the R² score) between a categorical variable and a continuous variable using an OLS (Ordinary Least Squares) model
+- Calculates the correlation (the square root of the R² score) between a categorical variable and a continuous variable using an OLS (Ordinary Least Squares) model.
 
 #### correlation_df
-- Calculate the Cramér's V correlation for all pairs of categorical columns, Pearson or Spearman correlation for all pairs of numeric columns and Sqrt of R^2 score for all pairs of numeric and categorical columns in a DataFrame
+- Calculate the Cramér's V correlation for all pairs of categorical columns, Pearson or Spearman correlation for all pairs of numeric columns and Sqrt of R^2 score for all pairs of numeric and categorical columns in a DataFrame.
+
+#### correlation_target_df
+- Calculate correlation between target and features only. The approach is like in [correlation_df](#correlation_df).
 
 #### tests_for_normality
 - Performs normality tests and optionally plots the distribution of the data.

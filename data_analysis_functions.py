@@ -1,6 +1,5 @@
 import os
 import random
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -271,12 +270,17 @@ def cramers_v_matrix(df, cat_cols):
             if lam == -1:
                 monte_carlo_list.append((cat_cols[i], cat_cols[j], cramers_v_value))
 
-    if len(monte_carlo_list) > 0:
+    if 0 < len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
         print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
 
-    return cramers_v_df
+        return cramers_v_df, None
+    else:
+        # create dictionary for convenience
+        monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['Col1', 'Col2', 'p_value'])
+
+        return cramers_v_df, monte_carlo_df
 
 
 # Missed values info
@@ -681,7 +685,6 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         corr_df (pd.DataFrame): DataFrame of all correlation values (like df.corr())
         monte_carlo_grouped_dict (dict or None): if the Monte Carlo simulations occurs > 5 times, else None
     """
-    # Initialize an empty DataFrame to store Cramér's V values
     all_cols = list(num_cols) + list(cat_cols)
 
     if target_col:
@@ -746,13 +749,97 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         return corr_df, None
     else:
         # create dictionary for convenience
-        monte_carlo_grouped_dict = defaultdict(list)
+        monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['Col1', 'Col2', 'p_value'])
 
-        # Iterate through the list and group by Col1Name
-        for col1, col2, p_val in monte_carlo_list:
-            monte_carlo_grouped_dict[col1].append((col2, p_val))
+        return corr_df, monte_carlo_df
 
-        # Convert defaultdict to a normal dictionary (optional)
-        monte_carlo_grouped_dict = dict(monte_carlo_grouped_dict)
 
-        return corr_df, monte_carlo_grouped_dict
+# Calculate correlation between features and target
+def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression', lin_corr_method='pearson',
+                          num_simulation=2000):
+    """
+    Calculate the Cramér's V correlation for categorical columns and target (if it is categorical),
+    Pearson or Spearman correlation for numeric columns and target (if it is numeric),
+    and Sqrt of R^2 score for numeric&categorical columns and target.
+
+    Args:
+        df (pd.DataFrame): DataFrame of features
+        target_col (string): name for target column
+        cat_cols (list): list of categorical columns names
+        num_cols (list): list of numeric columns names
+        task (str): how to treat target_col, if 'regression' then numeric; if 'classification' then categorical default
+                    'regression'
+        lin_corr_method (string)='pearson': method of linear correlation calculation 'pearson' or 'spearman'
+        num_simulation (int): number of simulations for Monte Carlo
+    Returns:
+        corr_df (pd.DataFrame): DataFrame of all correlation values (like df.corr())
+        monte_carlo_grouped_dict (dict or None): if the Monte Carlo simulations occurs > 5 times, else None
+    """
+    assert target_col in df.columns, "WARNING! target_col is not in df."
+
+    all_cols = list(num_cols) + list(cat_cols)
+
+    if target_col in all_cols:
+        i = all_cols.index(target_col)
+        all_cols.pop(i)
+    else:
+        pass
+
+    n = len(all_cols)
+    corr_df = pd.DataFrame(np.zeros((n, 1)), index=all_cols, columns=[target_col])
+
+    count_g_test = 0
+    count_monte_carlo = 0
+    monte_carlo_list = []
+
+    # Iterate over all pairs of columns
+    for i in range(n):
+
+        if (all_cols[i] in num_cols) and (task == 'regression'):
+            corr_val = df[[all_cols[i], target_col]].corr(method=lin_corr_method).iloc[0, 1]
+
+        elif (all_cols[i] in num_cols) and (task == 'classification'):
+            corr_val = categorical_vs_continuous_correlation(df[target_col], df[all_cols[i]])
+
+        elif (all_cols[i] in cat_cols) and (task == 'regression'):
+            corr_val = categorical_vs_continuous_correlation(df[all_cols[i]], df[target_col])
+
+        else:
+            # Create a contingency table for the pair of columns
+            cross_table, lam, text, yate_correction = confusion_table(df[all_cols[i]], df[target_col])
+
+            if lam == 0:
+                count_g_test += 1
+                if count_g_test < 4:
+                    print(text)
+
+            if lam == -1:
+                count_monte_carlo += 1
+                if count_monte_carlo > 3:
+                    text = None
+                else:
+                    pass
+
+            # Calculate Cramér's V for this pair
+            corr_val = cramers_v(cross_table, lam, text, yate_correction, num_simulations=num_simulation)
+
+            if lam == -1:
+                monte_carlo_list.append((target_col, all_cols[i], corr_val))
+
+        corr_df.iat[i] = corr_val
+
+    if count_g_test >= 4:
+        print("...")
+        print(f"G-test was used {count_g_test} times.")
+
+    if 0 < len(monte_carlo_list) < 6:
+        for gr in monte_carlo_list:
+            print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
+        print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
+
+        return corr_df, None
+    else:
+        # create dictionary for convenience
+        monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['target_col', 'feature', 'p_value'])
+
+        return corr_df, monte_carlo_df
