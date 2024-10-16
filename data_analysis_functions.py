@@ -735,6 +735,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
 
                 if lam == -1:
                     monte_carlo_list.append((all_cols[i], all_cols[j], corr_val))
+                    corr_val = np.nan
 
             corr_df.iat[i, j] = corr_val
             corr_df.iat[j, i] = corr_val
@@ -754,6 +755,7 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
         # create dictionary for convenience
         if monte_carlo_list:
             monte_carlo_df = pd.DataFrame(monte_carlo_list, columns=['Col1', 'Col2', 'p_value'])
+            monte_carlo_df = monte_carlo_df.pivot(index='Col1', columns='Col2', values='p_value')
 
             return corr_df, monte_carlo_df
 
