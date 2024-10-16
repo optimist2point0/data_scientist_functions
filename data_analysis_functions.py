@@ -652,8 +652,7 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
     """
     assert bool(np.all(pd.notnull(categorical_arr))) is True, ("WARNING! The Null values are present in "
                                                                "categorical_arr!")
-    assert bool(np.unique(categorical_arr).shape[0] == 1) is True, ("WARNING! The Null values are present in "
-                                                                    "categorical_arr!")
+    assert np.unique(categorical_arr).shape[0] != 1, "WARNING! One unique value in categorical_arr!"
     assert bool(np.all(pd.notnull(continuous_arr))) is True, ("WARNING! The Null values are present in "
                                                               "continuous_arr!")
 
