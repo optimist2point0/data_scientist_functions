@@ -273,7 +273,8 @@ def cramers_v_matrix(df, cat_cols):
     if 0 < len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
-        print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
+        print("Friendly remainder: if p-value < sign_value, reject the H_0 (there is statistically significant "
+              "evidence to suggest an association between the two variables).")
 
         return cramers_v_df, None
     else:
@@ -651,6 +652,8 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
     """
     assert bool(np.all(pd.notnull(categorical_arr))) is True, ("WARNING! The Null values are present in "
                                                                "categorical_arr!")
+    assert bool(np.unique(categorical_arr).shape[0] == 1) is True, ("WARNING! The Null values are present in "
+                                                                    "categorical_arr!")
     assert bool(np.all(pd.notnull(continuous_arr))) is True, ("WARNING! The Null values are present in "
                                                               "continuous_arr!")
 
@@ -659,7 +662,7 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
     elif isinstance(categorical_arr, np.ndarray):
         categorical_arr = categorical_arr.reshape(-1, 1)
 
-    x = OneHotEncoder().fit_transform(categorical_arr)
+    x = OneHotEncoder(drop='first', sparse_output=False).fit_transform(categorical_arr)
 
     model = LinearRegression()
     model.fit(x, continuous_arr)
@@ -744,7 +747,8 @@ def correlation_df(df, cat_cols, num_cols, lin_corr_method='pearson', target_col
     if 0 < len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
-        print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
+        print("Friendly remainder: if p-value < sign_value, reject the H_0 (there is statistically significant "
+              "evidence to suggest an association between the two variables).")
 
         return corr_df, None
     else:
@@ -839,7 +843,8 @@ def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression',
     if 0 < len(monte_carlo_list) < 6:
         for gr in monte_carlo_list:
             print(f"Cols {gr[0]} and {gr[1]} p-value is {gr[2]}")
-        print("Friendly remainder: if p-value > sign_value, then we reject the H_0 (independence of variables).")
+        print("Friendly remainder: if p-value < sign_value, reject the H_0 (there is statistically significant "
+              "evidence to suggest an association between the two variables).")
 
         return corr_df, None
 
