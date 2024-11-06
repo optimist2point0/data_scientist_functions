@@ -458,10 +458,10 @@ def continuous_vs_categorical_plots(continuous_arr, categorical_arr, desc_stats=
     if a == 1:
 
         f, axs = plt.subplots(1, 2, figsize=(9, 4))
-        sns.violinplot(x=continuous_arr, y=categorical_arr, ax=axs[0], fill=False)
+        sns.violinplot(x=categorical_arr, y=continuous_arr, orient='h', ax=axs[0], fill=False)
         axs[0].set_title("Violin-plot")
 
-        sns.boxplot(x=continuous_arr, y=categorical_arr, ax=axs[1])
+        sns.boxplot(x=categorical_arr, y=continuous_arr, orient='h', ax=axs[1])
         axs[1].set_title("Box-plot")
         plt.show()
 
