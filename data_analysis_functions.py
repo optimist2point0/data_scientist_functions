@@ -560,9 +560,13 @@ def categorical_vs_categorical_plots(categorical_arr_1, categorical_arr_2, desc_
     if verbose:
         cross = pd.crosstab(categorical_arr_2, categorical_arr_1)
         s = cross.sum(axis=0)
+        min_class = cross.sum(axis=1).argmin()
+        min_class_values = cross.loc[min_class].copy()
         cross = ((cross / s) * 100).round(2)
         cross = cross.astype(str)
         cross = cross.apply(lambda x: x + "%")
+        cross.loc[str(min_class)] = min_class_values
+        cross.loc["---"] = ["---"] * cross.shape[1]
         cross.loc['total'] = s
         cross.sort_values(by='total', axis=1, ascending=False, inplace=True)
         cross.loc['total %'] = ((s / categorical_arr_1.shape[0]) * 100).round(2)
