@@ -665,7 +665,10 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
     elif isinstance(categorical_arr, np.ndarray):
         categorical_arr = categorical_arr.reshape(-1, 1)
 
-    x = OneHotEncoder(drop='first', sparse_output=False).fit_transform(categorical_arr)
+    if (categorical_arr.dtype == int or categorical_arr.dtype == float) and np.unique(categorical_arr).shape[0] == 2:
+        x = categorical_arr.values
+    else:
+        x = OneHotEncoder(drop='first', sparse_output=False).fit_transform(categorical_arr)
 
     model = LinearRegression()
     model.fit(x, continuous_arr)
