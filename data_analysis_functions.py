@@ -659,14 +659,15 @@ def categorical_vs_continuous_correlation(categorical_arr, continuous_arr):
     assert np.unique(categorical_arr).shape[0] != 1, "WARNING! One unique value in categorical_arr!"
     assert bool(np.all(pd.notnull(continuous_arr))) is True, ("WARNING! The Null values are present in "
                                                               "continuous_arr!")
+    d_type = categorical_arr.dtype
 
     if isinstance(categorical_arr, pd.Series):
         categorical_arr = categorical_arr.to_frame()
     elif isinstance(categorical_arr, np.ndarray):
         categorical_arr = categorical_arr.reshape(-1, 1)
 
-    if (categorical_arr.dtype == int or categorical_arr.dtype == float) and np.unique(categorical_arr).shape[0] == 2:
-        x = categorical_arr.values
+    if (d_type == int or d_type == float) and np.unique(categorical_arr).shape[0] == 2:
+        x = categorical_arr
     else:
         x = OneHotEncoder(drop='first', sparse_output=False).fit_transform(categorical_arr)
 
