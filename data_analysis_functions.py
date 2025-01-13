@@ -842,6 +842,7 @@ def correlation_target_df(df, target_col, cat_cols, num_cols, task='regression',
 
             if lam == -1:
                 monte_carlo_list.append((target_col, all_cols[i], corr_val))
+                corr_val = np.nan
 
         corr_df.iat[i, 0] = corr_val
 
